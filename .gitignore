@@ -19,3 +19,9 @@
 
 # Go workspace file
 go.work
+
+# ___
+.DS_Store
+/cmd/.DS_Store
+/cmd/*/gcli-4Postman
+/cmd/*/*.log
