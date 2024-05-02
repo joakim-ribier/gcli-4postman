@@ -54,7 +54,7 @@ func (p PromptExitApp) PromptSuggest(in []string, d prompt.Document) ([]prompt.S
 }
 
 func (p PromptExitApp) PromptExecutor(in []string) *internal.PromptCallback {
-	if internal.HasRight(p, in, internal.APP_MODE) {
+	if internal.HasRightToExecute(p, in, internal.APP_MODE) {
 		p.logger.Info("Application exit!")
 		os.Exit(0)
 	}

@@ -94,7 +94,7 @@ func (p PromptLoadCollection) getFolders() map[string][]string {
 }
 
 func (p PromptLoadCollection) PromptExecutor(in []string) *internal.PromptCallback {
-	if internal.HasRight(p, in, internal.APP_MODE) {
+	if internal.HasRightToExecute(p, in, internal.APP_MODE) {
 		if len(in) > 1 {
 			if tab := strings.Split(strings.ReplaceAll(in[1], "", ""), "/_"); len(tab) == 2 {
 				if collections, is := p.getFolders()[tab[0]]; is && slicesutil.Exist(collections, tab[1]) {

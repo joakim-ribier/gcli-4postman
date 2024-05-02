@@ -10,7 +10,8 @@ import (
 type CollectionHistoryItems []CollectionHistoryItem
 
 type CollectionHistoryItem struct {
-	Item *Item
+	Number int
+	Item   Item
 
 	Status string
 	Body   []byte
@@ -21,9 +22,10 @@ type CollectionHistoryItem struct {
 	ExecutedAt time.Time
 }
 
-func NewCollectionHistoryItem(item *Item, status string, body []byte, env *Env, params []Param) CollectionHistoryItem {
+func NewCollectionHistoryItem(number int, item Item, status string, body []byte, env *Env, params []Param) CollectionHistoryItem {
 	return CollectionHistoryItem{
-		Item: item,
+		Number: number,
+		Item:   item,
 
 		Status: status,
 		Body:   body,
@@ -35,13 +37,18 @@ func NewCollectionHistoryItem(item *Item, status string, body []byte, env *Env, 
 	}
 }
 
-// GetSuggestDescription builds a descriptionof the collection history items for the prompt.
+// GetSuggestDescription builds the item description for the prompt suggestions.
 func (i CollectionHistoryItem) GetSuggestDescription() string {
 	envName := "No environment"
 	if i.Env != nil {
 		envName = i.Env.GetName()
 	}
 	return fmt.Sprintf("%s (@%s)", i.ExecutedAt.Format("2006-01-02 15:04:05"), envName)
+}
+
+// GetSuggestText builds the item text for the prompt suggestions.
+func (i CollectionHistoryItem) GetSuggestText() string {
+	return fmt.Sprintf("%s#%d", i.Item.GetLabel(), i.Number)
 }
 
 // SortByExecutedAt sorts collection history items by {executedAt} field.
@@ -54,6 +61,6 @@ func (r CollectionHistoryItems) SortByExecutedAt() CollectionHistoryItems {
 // FindByLabel finds collection history item that matches with {label}.
 func (r CollectionHistoryItems) FindByLabel(label string) *CollectionHistoryItem {
 	return slicesutil.FindT[CollectionHistoryItem](r, func(i CollectionHistoryItem) bool {
-		return i.Item.GetLabel() == label
+		return i.GetSuggestText() == label
 	})
 }

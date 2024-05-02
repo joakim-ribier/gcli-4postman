@@ -7,17 +7,20 @@ import (
 	"github.com/c-bata/go-prompt"
 	"github.com/joakim-ribier/gcli-4postman/internal"
 	"github.com/joakim-ribier/gcli-4postman/internal/pkg/prettyprint"
+	"github.com/joakim-ribier/gcli-4postman/internal/promptexecutors"
+	"github.com/joakim-ribier/gcli-4postman/pkg/logger"
 	"github.com/joakim-ribier/go-utils/pkg/slicesutil"
 )
 
 type PromptDisplayCollection struct {
-	c *internal.Context
+	c      *internal.Context
+	logger logger.Logger
 }
 
 func NewPromptDisplayCollection(c *internal.Context) internal.PromptAction {
-	return PromptDisplayCollection{
-		c: c,
-	}
+	p := PromptDisplayCollection{c: c}
+	p.logger = c.Log.Namespace(p.GetName())
+	return p
 }
 
 func (p PromptDisplayCollection) GetName() string {
@@ -25,7 +28,7 @@ func (p PromptDisplayCollection) GetName() string {
 }
 
 func (p PromptDisplayCollection) GetPromptExecutor() internal.PromptExecutor {
-	return nil
+	return promptexecutors.NewDisplayCollectionExecutor(*p.c, p.logger)
 }
 
 func (p PromptDisplayCollection) GetActionKeys() []string {
@@ -54,13 +57,13 @@ func (p PromptDisplayCollection) PromptSuggest(in []string, d prompt.Document) (
 }
 
 func (p PromptDisplayCollection) PromptExecutor(in []string) *internal.PromptCallback {
-	if internal.HasRight(p, in, internal.APP_MODE) {
+	if internal.HasRightToExecute(p, in, internal.APP_MODE) {
 		if p.c.Collection == nil {
 			p.c.Print("WARN", "select a collection before to display it")
 			return nil
 		}
-		value := slicesutil.FindNextEl(in, "--search")
-		prettyprint.PrintCollection(p.c.Collection.SortByName(), value)
+		p.GetPromptExecutor().(promptexecutors.DisplayCollectionExecutor).
+			Display(slicesutil.FindNextEl(in, "--search"))
 	}
 	return nil
 }

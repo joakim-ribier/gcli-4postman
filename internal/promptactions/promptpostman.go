@@ -90,7 +90,7 @@ func (p PromptPostman) PromptSuggest(in []string, d prompt.Document) ([]prompt.S
 }
 
 func (p PromptPostman) PromptExecutor(in []string) *internal.PromptCallback {
-	if internal.HasRight(p, in, internal.APP_MODE) {
+	if internal.HasRightToExecute(p, in, internal.APP_MODE) {
 		apiKey := slicesutil.FindNextEl(in, apiKeyParam)
 
 		if apiKey == "" {
@@ -260,7 +260,7 @@ func (p PromptPostman) save(workspace postman.PSTWorkspace, collections []postma
 				p.logger.Error(err, "file cannot be renamed", "from", workspaceTemporaryFolder, "to", p.buildWorkspaceRootFolder(workspace.Name, ""))
 				p.c.Print("ERROR", "unable to rename \"%s\" to \"%s\", do it manually...", workspaceTemporaryFolder, p.buildWorkspaceRootFolder(workspace.Name, ""))
 			} else {
-				p.c.Print("INFO", "rename temporay folder to \"%s\"", p.buildWorkspaceRootFolder(workspace.Name, ""))
+				p.c.Print("INFO", "rename temporary folder to \"%s\"", p.buildWorkspaceRootFolder(workspace.Name, ""))
 			}
 		}
 	}

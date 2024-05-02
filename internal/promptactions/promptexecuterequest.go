@@ -8,10 +8,9 @@ import (
 
 	"github.com/c-bata/go-prompt"
 	"github.com/joakim-ribier/gcli-4postman/internal"
-	"github.com/joakim-ribier/gcli-4postman/internal/pkg/httputil"
 	"github.com/joakim-ribier/gcli-4postman/internal/pkg/prettyprint"
 	"github.com/joakim-ribier/gcli-4postman/internal/postman"
-	"github.com/joakim-ribier/gcli-4postman/pkg/ioutil"
+	"github.com/joakim-ribier/gcli-4postman/internal/promptexecutors"
 	"github.com/joakim-ribier/gcli-4postman/pkg/logger"
 	"github.com/joakim-ribier/go-utils/pkg/slicesutil"
 	"github.com/joakim-ribier/go-utils/pkg/stringsutil"
@@ -40,7 +39,7 @@ func (p PromptExecuteRequest) GetName() string {
 }
 
 func (p PromptExecuteRequest) GetPromptExecutor() internal.PromptExecutor {
-	return nil
+	return promptexecutors.NewExecuteRequestExecutor(*p.c, p.logger)
 }
 
 func (p PromptExecuteRequest) GetActionKeys() []string {
@@ -76,7 +75,7 @@ func (p PromptExecuteRequest) PromptSuggest(in []string, d prompt.Document) ([]p
 
 	if slices.Contains(in, historyS.Text) {
 		return slicesutil.TransformT[postman.CollectionHistoryItem, prompt.Suggest](p.c.CollectionHistoryRequests.SortByExecutedAt(), func(f postman.CollectionHistoryItem) (*prompt.Suggest, error) {
-			return &prompt.Suggest{Text: f.Item.GetLabel(), Description: f.GetSuggestDescription()}, nil
+			return &prompt.Suggest{Text: f.GetSuggestText(), Description: f.GetSuggestDescription()}, nil
 		}), nil
 	}
 
@@ -139,73 +138,38 @@ func (p PromptExecuteRequest) PromptSuggest(in []string, d prompt.Document) ([]p
 }
 
 func (p PromptExecuteRequest) PromptExecutor(in []string) *internal.PromptCallback {
-	if internal.HasRight(p, in, internal.APP_MODE) {
+	if internal.HasRightToExecute(p, in, internal.APP_MODE) {
+		if p.c.Collection == nil {
+			p.c.Print("WARN", "select a collection from the suggestions")
+			return nil
+		}
 		if slices.Contains(in, historyS.Text) && len(in) > 1 {
 			if slices.Contains(in, "--reset") {
-				p.resetHistory()
+				p.GetPromptExecutor().(promptexecutors.ExecuteRequestExecutor).ResetHistory()
+				p.c.CollectionHistoryRequests = postman.CollectionHistoryItems{}
 			} else {
 				if itemResponse := p.c.CollectionHistoryRequests.FindByLabel(in[2]); itemResponse != nil {
 					internal.DisplayBodyResponse(in, itemResponse, p.logger)
 				}
 			}
 		} else {
-			p.executeRequest(in)
+			value := slicesutil.FindNextEl(in, httpUrlS.Text)
+			if item := p.c.Collection.FindItemByLabel(value); item != nil {
+				if response, err := p.GetPromptExecutor().(promptexecutors.ExecuteRequestExecutor).Call(in, *item); err != nil {
+					p.c.Print("ERROR", stringsutil.NewStringS(err.Error()).ReplaceAll("%7B", "{").ReplaceAll("%7D", "}").S())
+				} else {
+					internal.AddCMDHistory(*p.c, strings.Join(in, " "))
+					p.c.AddCollectionHistoryRequest(*response)
+					p.GetPromptExecutor().(promptexecutors.ExecuteRequestExecutor).HistoriseCollection(p.c.CollectionHistoryRequests)
+					internal.DisplayBodyResponse(in, response, p.logger)
+				}
+			} else {
+				p.c.Print("WARN", "request {%s} does not exist in the collection", value)
+				return nil
+			}
 		}
 	}
 	return nil
-}
-
-func (p PromptExecuteRequest) executeRequest(in []string) {
-	if p.c.Collection == nil {
-		p.c.Print("WARN", "select a collection from the suggestions")
-		return
-	}
-
-	selectedUrl := slicesutil.FindNextEl(in, httpUrlS.Text)
-
-	if item := p.c.Collection.FindItemByLabel(selectedUrl); item != nil {
-		var params []postman.Param = slicesutil.TransformT[string, postman.Param](item.GetParams(), func(param string) (*postman.Param, error) {
-			if value := slicesutil.FindNextEl(in, param); value != "" {
-				return &postman.Param{Key: param, Value: value}, nil
-			} else {
-				return nil, nil
-			}
-		})
-
-		response, err := httputil.Call(item, p.c.Env, params)
-		if err != nil {
-			p.logger.Error(err, "request cannot be called", "resource", item.GetLabel(), "url", item.Request.Url.Raw)
-			p.c.Print("ERROR", stringsutil.NewStringS(err.Error()).ReplaceAll("%7B", "{").ReplaceAll("%7D", "}").S())
-			return
-		}
-
-		internal.AddCMDHistory(*p.c, strings.Join(in, " "))
-		itemResponse := postman.NewCollectionHistoryItem(item, response.Status, response.Body, p.c.Env, params)
-		p.historise(itemResponse)
-		internal.DisplayBodyResponse(in, &itemResponse, p.logger)
-	} else {
-		p.c.Print("WARN", "request {%s} does not exist in the collection", selectedUrl)
-		return
-	}
-}
-
-func (p PromptExecuteRequest) historise(r postman.CollectionHistoryItem) {
-	p.c.AddCollectionHistoryRequest(r)
-	p.writeCollectionHistorise()
-}
-
-func (p PromptExecuteRequest) writeCollectionHistorise() {
-	if err := ioutil.Write[postman.CollectionHistoryItems](p.c.CollectionHistoryRequests, p.c.GetCollectionHistoryPath(), internal.SECRET); err != nil {
-		p.logger.Error(err, "collection history cannot be written", "resource", p.c.GetCollectionHistoryPath())
-		p.c.Print("ERROR", "unable to write collection history...")
-	} else {
-		p.logger.Info("write history collection", "resource", p.c.GetCollectionHistoryPath(), "size", len(p.c.CollectionHistoryRequests))
-	}
-}
-
-func (p PromptExecuteRequest) resetHistory() {
-	p.c.CollectionHistoryRequests = postman.CollectionHistoryItems{}
-	p.writeCollectionHistorise()
 }
 
 func (p PromptExecuteRequest) PromptCallback(in []string, actions []internal.PromptAction, args ...any) {

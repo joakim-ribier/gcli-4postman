@@ -8,8 +8,7 @@ import (
 	"github.com/c-bata/go-prompt"
 	"github.com/joakim-ribier/gcli-4postman/internal"
 	"github.com/joakim-ribier/gcli-4postman/internal/pkg/prettyprint"
-	"github.com/joakim-ribier/gcli-4postman/internal/promptexecutors/help"
-	"github.com/joakim-ribier/gcli-4postman/internal/promptexecutors/settings"
+	"github.com/joakim-ribier/gcli-4postman/internal/promptexecutors"
 	"github.com/joakim-ribier/gcli-4postman/pkg/logger"
 	"github.com/joakim-ribier/go-utils/pkg/slicesutil"
 )
@@ -44,12 +43,8 @@ func (p PromptSettings) GetName() string {
 	return "PromptSettings"
 }
 
-func (p PromptSettings) executor() settings.SettingsExecutor {
-	return settings.NewSettingsExecutor(*p.c, p.logger)
-}
-
 func (p PromptSettings) GetPromptExecutor() internal.PromptExecutor {
-	return p.executor()
+	return promptexecutors.NewSettingsExecutor(*p.c, p.logger)
 }
 
 func (p PromptSettings) GetActionKeys() []string {
@@ -108,7 +103,7 @@ func (p PromptSettings) getSecureModeSuggest(in []string) ([]prompt.Suggest, err
 }
 
 func (p PromptSettings) PromptExecutor(in []string) *internal.PromptCallback {
-	if internal.HasRight(p, in, internal.APP_MODE) {
+	if internal.HasRightToExecute(p, in, internal.APP_MODE) {
 		if slicesutil.Exist(in, p.updateReadmeSuggest.Text) {
 			return internal.NewPromptCallback(
 				"Update README (Yes / No)",
@@ -120,7 +115,7 @@ func (p PromptSettings) PromptExecutor(in []string) *internal.PromptCallback {
 		if slicesutil.Exist(in, p.secureModeSuggest.Text) {
 			if slicesutil.Exist(in, enableOptionParam) {
 				if newSecret := slicesutil.FindNextEl(in, secretOptionParam); newSecret != "" {
-					if r := p.executor().EnableSecureMode(newSecret); r {
+					if r := p.GetPromptExecutor().(promptexecutors.SettingsExecutor).EnableSecureMode(newSecret); r {
 						internal.SECRET = newSecret
 					}
 				} else {
@@ -129,7 +124,7 @@ func (p PromptSettings) PromptExecutor(in []string) *internal.PromptCallback {
 				return nil
 			}
 			if slicesutil.Exist(in, disableOptionParam) {
-				if r := p.executor().DisableSecureMode(); r {
+				if r := p.GetPromptExecutor().(promptexecutors.SettingsExecutor).DisableSecureMode(); r {
 					internal.SECRET = ""
 				}
 				return nil
@@ -143,15 +138,8 @@ func (p PromptSettings) PromptExecutor(in []string) *internal.PromptCallback {
 func (p PromptSettings) PromptCallback(in []string, actions []internal.PromptAction, args ...any) {
 	if len(args) > 0 && args[0].(string) == p.updateReadmeSuggest.Text {
 		if slicesutil.Exist(in, "Yes") {
-			p.executor().UpdateReadme(p.buildHelpDocumentation(actions))
+			p.GetPromptExecutor().(promptexecutors.SettingsExecutor).UpdateReadme(
+				promptexecutors.NewHelpExecutor(actions).Generate())
 		}
-	}
-}
-
-func (p PromptSettings) buildHelpDocumentation(actions []internal.PromptAction) string {
-	if executor := internal.FindPromptActionExecutor[help.HelpExecutor](actions); executor == nil {
-		return ""
-	} else {
-		return executor.Generate()
 	}
 }

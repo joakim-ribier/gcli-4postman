@@ -3,7 +3,7 @@ package promptactions
 import (
 	"github.com/c-bata/go-prompt"
 	"github.com/joakim-ribier/gcli-4postman/internal"
-	"github.com/joakim-ribier/gcli-4postman/internal/promptexecutors/help"
+	"github.com/joakim-ribier/gcli-4postman/internal/promptexecutors"
 )
 
 type PromptHelp struct {
@@ -18,12 +18,8 @@ func (p PromptHelp) GetName() string {
 	return "PromptHelp"
 }
 
-func (p PromptHelp) executor() help.HelpExecutor {
-	return help.NewHelpExecutor(p.actions)
-}
-
 func (p PromptHelp) GetPromptExecutor() internal.PromptExecutor {
-	return p.executor()
+	return promptexecutors.NewHelpExecutor(p.actions)
 }
 
 func (p PromptHelp) GetActionKeys() []string {
@@ -47,8 +43,8 @@ func (p PromptHelp) PromptSuggest(in []string, d prompt.Document) ([]prompt.Sugg
 }
 
 func (p PromptHelp) PromptExecutor(in []string) *internal.PromptCallback {
-	if internal.HasRight(p, in, internal.APP_MODE) {
-		p.executor().Display()
+	if internal.HasRightToExecute(p, in, internal.APP_MODE) {
+		p.GetPromptExecutor().(promptexecutors.HelpExecutor).Display()
 	}
 	return nil
 }

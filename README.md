@@ -49,27 +49,27 @@ To optimize the list of suggestions from the prompt completer, it is possible to
 | load | :l |  | Load a collection - `Postman API HTTP requests format` - from the local disk.<br/>`# :l my-collection` |
 | env | :e |  | Select the collection execution environment.<br/>`# :e localhost` |
 | http | :h |  | Execute a request from the collection - `!! BE CAREFUL TO THE ENVIRONMENT !!`<br/>`# :h -m GET -u GET:users --pretty` |
- |  |  |  `-m`  |  - filter requests by method (GET, POST, ...)  |
- |  |  |  `-u`  |  - find a request to execute  |
- |  |  |  `-history`  |  - find a history request<br/>`# :h -history GET:users --pretty`  |
- |  |  |  `-history --reset`  |  - reset the collection history requests  |
- |  |  |  `--search {pattern}`  |  - XPath query to extract data from the response  |
- |  |  |  `--pretty`  |  - display a beautiful HTTP json response  |
+ |  |  |  `-m`  |  - filter requests by method (GET, POST, ...)  | 
+ |  |  |  `-u`  |  - find a request to execute  | 
+ |  |  |  `-history`  |  - find a history request<br/>`# :h -history GET:users --pretty`  | 
+ |  |  |  `-history --reset`  |  - reset the collection history requests  | 
+ |  |  |  `--search {pattern}`  |  - XPath query to extract data from the response  | 
+ |  |  |  `--pretty`  |  - display a beautiful HTTP json response  | 
 | display | :d |  | Display API requests of the current loaded collection.<br/>`# :d --search users` |
- |  |  |  `--search {pattern}`  |  - API requests full-text search  |
+ |  |  |  `--search {pattern}`  |  - API requests full-text search  | 
 | postman | :p |  | Connexion to a `Postman` account to sync the workspaces on the local disk.<br/>`# :p --apiKey {KEY} -sync {workspace}` |
- |  |  |  `--apiKey`  |  - API keys settings  |
- |  |  |  `-workspace`  |  - display the remote workspaces linked to the {API_KEY}  |
- |  |  |  `-sync {workspace Id/Name}`  |  - sync one of the workspaces locally  |
+ |  |  |  `--apiKey`  |  - API keys settings  | 
+ |  |  |  `-workspace`  |  - display the remote workspaces linked to the {API_KEY}  | 
+ |  |  |  `-sync {workspace Id/Name}`  |  - sync one of the workspaces locally  | 
 | settings | :s |  | Available settings (or actions) on `CLI-4Postman`<br/>`# :s -secure-mode enable --secret {secret}` |
- |  |  |  `-update-readme`  |  - update the README from help documentation `// --mode admin`  |
- |  |  |  `-secure-mode enable`  |  - enable secure mode by adding (or update) a new secret `--secret {secret}` `// --mode admin`  |
- |  |  |  `-secure-mode disable`  |  - disable secure mode `!! NOT RECOMMENDED !!` `// --mode admin`  |
+ |  |  |  `-update-readme`  |  - update the README from help documentation `// --mode admin`  | 
+ |  |  |  `-secure-mode enable`  |  - enable secure mode by adding (or update) a new secret `--secret {secret}` `// --mode admin`  | 
+ |  |  |  `-secure-mode disable`  |  - disable secure mode `!! NOT RECOMMENDED !!` `// --mode admin`  | 
 | exit | :q |  | Exit the application.<br/>`# :q` |
 
 
- `--search {pattern}`  is a 'XPath query' (`//*/status[text()='ERROR']`) format to filter the response,
-                       go to `https://github.com/antchfx/jsonquery` to see all possibilities.
+ `--search {pattern}`  is a 'XPath query' (`//*/status[text()='ERROR']`) format to filter the response, 
+                       go to `https://github.com/antchfx/jsonquery` to see all possibilities.           
 #how-to-use#
 
 The `how-to-use` part is directly generated from the application in `ADMIN` mode.

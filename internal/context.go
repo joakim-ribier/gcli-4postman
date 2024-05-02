@@ -75,7 +75,7 @@ func (c *Context) GetEnvPath(env postman.Env) string {
 }
 
 func (c *Context) GetCMDHistoryPath() string {
-	return GetHomeFilePath("gocli4pst_cmd.json")
+	return GetHomeFilePath("gcli-4postman_cmd.json")
 }
 
 func (c *Context) GetWorkspacePath() string {

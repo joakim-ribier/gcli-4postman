@@ -51,7 +51,7 @@ func (p PromptSelectEnv) GetOptions(markdown bool) []internal.Option {
 }
 
 func (p PromptSelectEnv) PromptExecutor(in []string) *internal.PromptCallback {
-	if internal.HasRight(p, in, internal.APP_MODE) {
+	if internal.HasRightToExecute(p, in, internal.APP_MODE) {
 		if len(in) > 1 {
 			selectedEnv := postman.NewEnv()
 			for _, env := range p.c.Envs {

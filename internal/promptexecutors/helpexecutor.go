@@ -1,4 +1,4 @@
-package help
+package promptexecutors
 
 import (
 	"fmt"
@@ -10,12 +10,12 @@ import (
 	"github.com/joakim-ribier/go-utils/pkg/slicesutil"
 )
 
-// "PromptHelp" action's executor.
+// Executor for help action.
 type HelpExecutor struct {
 	actions []internal.PromptAction
 }
 
-// NewHelpExecutor builds executor for "PromptHelp" action.
+// NewHelpExecutor builds executor for help action.
 func NewHelpExecutor(actions []internal.PromptAction) HelpExecutor {
 	return HelpExecutor{
 		actions: actions,

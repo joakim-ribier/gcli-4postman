@@ -6,7 +6,7 @@ import (
 )
 
 // Call executes collection {item} API request on a specific environment and returns the {httpsutil.HttpResponse}.
-func Call(item *postman.Item, env *postman.Env, params []postman.Param) (*httpsutil.HttpResponse, error) {
+func Call(item postman.Item, env *postman.Env, params []postman.Param) (*httpsutil.HttpResponse, error) {
 	r, err := httpsutil.NewHttpRequest(item.Request.Url.Get(env, params), item.Request.Body.Get(env, params))
 	if err != nil {
 		return nil, err
