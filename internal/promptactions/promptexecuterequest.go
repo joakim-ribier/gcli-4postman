@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"slices"
+	"strconv"
 	"strings"
 
 	"github.com/c-bata/go-prompt"
@@ -11,16 +12,17 @@ import (
 	"github.com/joakim-ribier/gcli-4postman/internal/pkg/prettyprint"
 	"github.com/joakim-ribier/gcli-4postman/internal/postman"
 	"github.com/joakim-ribier/gcli-4postman/internal/promptexecutors"
+	"github.com/joakim-ribier/gcli-4postman/internal/promptexecutors/execs"
 	"github.com/joakim-ribier/gcli-4postman/pkg/logger"
+	"github.com/joakim-ribier/go-utils/pkg/iosutil"
 	"github.com/joakim-ribier/go-utils/pkg/slicesutil"
 	"github.com/joakim-ribier/go-utils/pkg/stringsutil"
 )
 
 var (
-	httpMethodS   = prompt.Suggest{Text: "-m", Description: "filter requests by method (GET, POST, ...)"}
-	httpUrlS      = prompt.Suggest{Text: "-u", Description: "find a request to execute"}
-	historyS      = prompt.Suggest{Text: "-history", Description: "find a history request"}
-	historyResetS = prompt.Suggest{Text: "-history --reset", Description: "reset the collection history requests"}
+	httpMethodS = prompt.Suggest{Text: "-m", Description: "filter requests by method (GET, POST, ...)"}
+	httpUrlS    = prompt.Suggest{Text: "-u", Description: "find a request to execute"}
+	historyS    = prompt.Suggest{Text: "-history", Description: "find a history request"}
 )
 
 type PromptExecuteRequest struct {
@@ -62,9 +64,11 @@ func (p PromptExecuteRequest) GetOptions(markdown bool) []internal.Option {
 		{Value: httpMethodS.Text, Description: httpMethodS.Description},
 		{Value: httpUrlS.Text, Description: httpUrlS.Description},
 		{Value: historyS.Text, Description: fmt.Sprintf("%s\n%s", historyS.Description, prettyprint.FormatTextWithColor("# :h -history GET:users --pretty", "Y", markdown))},
-		{Value: historyResetS.Text, Description: historyResetS.Description},
 		{Value: "--search {pattern}", Description: "XPath query to extract data from the response"},
 		{Value: "--pretty", Description: "display a beautiful HTTP json response"},
+		{Value: "--full", Description: fmt.Sprintf("display the full response (not limited to %s characters)", prettyprint.FormatTextWithColor(strconv.Itoa(internal.HTTP_BODY_SIZE_LIMIT), "Y", markdown))},
+		{Value: "--save {/path/file.json}", Description: "save the full body response in a file"},
+		{Value: "--reset", Description: "reset the collection history requests"},
 	}
 }
 
@@ -148,8 +152,12 @@ func (p PromptExecuteRequest) PromptExecutor(in []string) *internal.PromptCallba
 				p.GetPromptExecutor().(promptexecutors.ExecuteRequestExecutor).ResetHistory()
 				p.c.CollectionHistoryRequests = postman.CollectionHistoryItems{}
 			} else {
-				if itemResponse := p.c.CollectionHistoryRequests.FindByLabel(in[2]); itemResponse != nil {
-					internal.DisplayBodyResponse(in, itemResponse, p.logger)
+				if len(in) > 2 {
+					if itemResponse := p.c.CollectionHistoryRequests.FindByLabel(in[2]); itemResponse != nil {
+						execs.NewDisplayBodyResponseExec(p.logger, prettyprint.Print).Display(
+							slicesutil.FilterT(in, func(s string) bool { return s != "--full" }), itemResponse)
+						prettyprint.Print("\n...the response from the history body may have been truncated...")
+					}
 				}
 			}
 		} else {
@@ -158,10 +166,19 @@ func (p PromptExecuteRequest) PromptExecutor(in []string) *internal.PromptCallba
 				if response, err := p.GetPromptExecutor().(promptexecutors.ExecuteRequestExecutor).Call(in, *item); err != nil {
 					p.c.Print("ERROR", stringsutil.NewStringS(err.Error()).ReplaceAll("%7B", "{").ReplaceAll("%7D", "}").S())
 				} else {
+					// historise item
 					internal.AddCMDHistory(*p.c, strings.Join(in, " "))
 					p.c.AddCollectionHistoryRequest(*response)
 					p.GetPromptExecutor().(promptexecutors.ExecuteRequestExecutor).HistoriseCollection(p.c.CollectionHistoryRequests)
-					internal.DisplayBodyResponse(in, response, p.logger)
+					// display response
+					execs.NewDisplayBodyResponseExec(p.logger, prettyprint.Print).Display(in, response)
+					// export body
+					if path := slicesutil.FindNextEl(in, "--save"); path != "" {
+						if err := iosutil.Write(response.Data, path); err != nil {
+							p.c.Log.Error(err, "data cannot be writed")
+							p.c.Print("ERROR", "the body's response cannot be saved...")
+						}
+					}
 				}
 			} else {
 				p.c.Print("WARN", "request {%s} does not exist in the collection", value)

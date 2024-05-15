@@ -102,7 +102,7 @@ func (p PromptPostman) PromptExecutor(in []string) *internal.PromptCallback {
 			internal.AddCMDHistory(*p.c, strings.Join(in, " "))
 
 			if bytes := p.call(workspacesEndpoint, apiKey); bytes != nil {
-				prettyprint.PrintJson(bytes, slicesutil.Exist(in, "--pretty"))
+				prettyprint.Print(prettyprint.SPrintJson(bytes, slicesutil.Exist(in, "--pretty")))
 			}
 			return nil
 		}

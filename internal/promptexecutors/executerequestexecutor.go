@@ -40,7 +40,11 @@ func (er ExecuteRequestExecutor) Call(in []string, item postman.Item) (*postman.
 	}
 
 	var itemResponse = postman.NewCollectionHistoryItem(
-		len(er.c.CollectionHistoryRequests)+1, item, response.Status, response.Body, er.c.Env, params)
+		len(er.c.CollectionHistoryRequests)+1, item,
+		response.Status, response.TimeInMillis,
+		response.TruncateBody(internal.HTTP_BODY_SIZE_LIMIT),
+		response.Body, response.ContentLength,
+		er.c.Env, params)
 
 	return &itemResponse, nil
 }

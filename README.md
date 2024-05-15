@@ -52,9 +52,11 @@ To optimize the list of suggestions from the prompt completer, it is possible to
  |  |  |  `-m`  |  - filter requests by method (GET, POST, ...)  | 
  |  |  |  `-u`  |  - find a request to execute  | 
  |  |  |  `-history`  |  - find a history request<br/>`# :h -history GET:users --pretty`  | 
- |  |  |  `-history --reset`  |  - reset the collection history requests  | 
  |  |  |  `--search {pattern}`  |  - XPath query to extract data from the response  | 
  |  |  |  `--pretty`  |  - display a beautiful HTTP json response  | 
+ |  |  |  `--full`  |  - display the full response (not limited to `5000` characters)  | 
+ |  |  |  `--save {/path/file.json}`  |  - save the full body response in a file  | 
+ |  |  |  `--reset`  |  - reset the collection history requests  | 
 | display | :d |  | Display API requests of the current loaded collection.<br/>`# :d --search users` |
  |  |  |  `--search {pattern}`  |  - API requests full-text search  | 
 | postman | :p |  | Connexion to a `Postman` account to sync the workspaces on the local disk.<br/>`# :p --apiKey {KEY} -sync {workspace}` |

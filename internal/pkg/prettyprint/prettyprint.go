@@ -9,29 +9,23 @@ import (
 )
 
 // Print prints text on the console.
-func print(title string, content string, prefix string) {
-	if title != "" {
-		fmt.Printf("%s\n", title)
-	}
-
-	for _, line := range strings.Split(content, "\n") {
-		fmt.Printf("%s%s\n", prefix, line)
+func Print(value string) {
+	for _, line := range strings.Split(value, "\n") {
+		fmt.Printf("%s\n", line)
 	}
 }
 
 // PrintJson prints and returns json value
-func PrintJson(data []byte, prettyJson bool) string {
+func SPrintJson(data []byte, prettyJson bool) string {
 	if prettyJson {
 		data = pretty.Pretty(data)
 	}
-	str := string(pretty.Color(data, nil)[:])
-	print("", str, "")
-	return str
+	return string(pretty.Color(data, nil)[:])
 }
 
 // PrintInColor colorizes and prints the 'str' value based on the 'pattern'
-func PrintInColor(str, level string, markdown bool) {
-	print("", FormatTextWithColor(str, level, markdown), "")
+func SPrintInColor(str, level string, markdown bool) string {
+	return FormatTextWithColor(str, level, markdown)
 }
 
 // FormatTextWithColor colorizes the 'str' value based on the 'pattern'

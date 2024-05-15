@@ -13,8 +13,14 @@ type CollectionHistoryItem struct {
 	Number int
 	Item   Item
 
-	Status string
-	Body   []byte
+	Status       string
+	TimeInMillis int64
+
+	Body  string
+	Trunc bool
+
+	Data          []byte `json:"-"` // whole body but not serialized
+	ContentLength int64
 
 	Env    *Env
 	Params []Param
@@ -22,18 +28,39 @@ type CollectionHistoryItem struct {
 	ExecutedAt time.Time
 }
 
-func NewCollectionHistoryItem(number int, item Item, status string, body []byte, env *Env, params []Param) CollectionHistoryItem {
+func NewCollectionHistoryItem(number int, item Item, status string, timeInMillis int64, body string, data []byte, contentLength int64, env *Env, params []Param) CollectionHistoryItem {
 	return CollectionHistoryItem{
 		Number: number,
 		Item:   item,
 
-		Status: status,
-		Body:   body,
+		Status:       status,
+		TimeInMillis: timeInMillis,
+
+		Body:  body,
+		Trunc: len(data) != len(body),
+
+		Data:          data,
+		ContentLength: contentLength,
 
 		Env:    env,
 		Params: params,
 
 		ExecutedAt: time.Now(),
+	}
+}
+
+// GetBody returns the {i.Data} bytes if exists else {i.Body} string.
+func (i CollectionHistoryItem) GetBody(max int) []byte {
+	if i.Data != nil {
+		if len(i.Data) > max && max != -1 {
+			return i.Data[:max]
+		}
+		return i.Data
+	} else {
+		if len(i.Body) > max && max != -1 {
+			return []byte(i.Body[:max])
+		}
+		return []byte(i.Body)
 	}
 }
 

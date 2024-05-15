@@ -11,6 +11,7 @@ import (
 	"github.com/joakim-ribier/gcli-4postman/internal/promptactions"
 	"github.com/joakim-ribier/gcli-4postman/pkg/ioutil"
 	"github.com/joakim-ribier/gcli-4postman/pkg/logger"
+	"github.com/joakim-ribier/go-utils/pkg/genericsutil"
 	"github.com/joakim-ribier/go-utils/pkg/slicesutil"
 	"github.com/joakim-ribier/go-utils/pkg/stringsutil"
 )
@@ -225,7 +226,7 @@ func promptExecutor(in string) {
 		promptCallback = nil
 	} else {
 		for _, promptAction := range actions {
-			if callback := promptAction.PromptExecutor(tab); callback != nil {
+			if callback := promptAction.PromptExecutor(slicesutil.FilterByNonEmpty(tab)); callback != nil {
 				promptCallback = callback
 			}
 		}
@@ -254,13 +255,13 @@ func print(level, text string, args ...any) {
 
 	if strings.ToLower(level) != "debug" && text != "" {
 		if len(args) > 0 {
-			prettyprint.PrintInColor(fmt.Sprintf(prefix+text+suffix, args...), level, false)
+			prettyprint.Print(prettyprint.SPrintInColor(fmt.Sprintf(prefix+text+suffix, args...), level, false))
 		} else {
-			prettyprint.PrintInColor(prefix+text+suffix, level, false)
+			prettyprint.Print(prettyprint.SPrintInColor(prefix+text+suffix, level, false))
 		}
 	}
 }
 
 func secureMode() string {
-	return stringsutil.NewStringS(internal.SECRET).When("DISABLE", "ENABLE", stringsutil.IsEmpty)
+	return genericsutil.When(internal.SECRET, stringsutil.IsEmpty, "DISABLE", "ENABLE")
 }

@@ -8,8 +8,8 @@ require (
 	github.com/go-logr/logr v1.4.1
 	github.com/go-logr/zapr v1.3.0
 	github.com/gosimple/slug v1.14.0
-	github.com/jedib0t/go-pretty/v6 v6.5.8
-	github.com/joakim-ribier/go-utils v0.0.0-20240405210309-457ec5b5e5b2
+	github.com/jedib0t/go-pretty/v6 v6.5.9
+	github.com/joakim-ribier/go-utils v0.0.0-20240515194451-9e322e56bc18
 	github.com/tidwall/pretty v1.2.1
 	go.uber.org/zap v1.27.0
 )
@@ -25,5 +25,5 @@ require (
 	github.com/pkg/term v1.2.0-beta.2 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
-	golang.org/x/sys v0.19.0 // indirect
+	golang.org/x/sys v0.20.0 // indirect
 )

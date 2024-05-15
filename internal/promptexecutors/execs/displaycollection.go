@@ -8,15 +8,24 @@ import (
 	"github.com/joakim-ribier/gcli-4postman/internal/postman"
 )
 
-type DisplayCollectionExec struct{}
+type DisplayCollectionExec struct {
+	output func(string)
+}
 
-func NewDisplayCollectionExec() DisplayCollectionExec {
-	return DisplayCollectionExec{}
+func NewDisplayCollectionExec(output func(string)) DisplayCollectionExec {
+	return DisplayCollectionExec{
+		output: output,
+	}
 }
 
 // Display builds and displays collection using the {out} provided function.
-func (u DisplayCollectionExec) Display(collection postman.Collection, filterBy string, out func(string)) {
-	out(u.buildWriter(collection.SortByName(), filterBy).Render())
+func (u DisplayCollectionExec) Display(collection postman.Collection, filterBy string) {
+	u.output("[" + collection.Info.Name + "'s collection]")
+	if len(collection.Items) > 0 {
+		u.output(u.buildWriter(collection.SortByName(), filterBy).Render())
+	} else {
+		u.output("...empty collection...")
+	}
 }
 
 func (u DisplayCollectionExec) buildWriter(collection postman.Collection, filterBy string) list.Writer {

@@ -10,6 +10,7 @@ import (
 
 var GCLI_4POSTMAN_HOME = os.Getenv("GCLI_4POSTMAN_HOME")
 var APP_MODE = "user"
+var HTTP_BODY_SIZE_LIMIT = 5000
 var SECRET = ""
 var FILE_LOG = ""
 

@@ -28,7 +28,7 @@ func (p PromptDisplayCollection) GetName() string {
 }
 
 func (p PromptDisplayCollection) GetPromptExecutor() internal.PromptExecutor {
-	return promptexecutors.NewDisplayCollectionExecutor(*p.c, p.logger)
+	return promptexecutors.NewDisplayCollectionExecutor(*p.c, p.logger, prettyprint.Print)
 }
 
 func (p PromptDisplayCollection) GetActionKeys() []string {
