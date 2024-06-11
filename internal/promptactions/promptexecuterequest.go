@@ -20,9 +20,9 @@ import (
 )
 
 var (
-	httpMethodS = prompt.Suggest{Text: "-m", Description: "filter requests by method (GET, POST, ...)"}
+	httpMethodS = prompt.Suggest{Text: "-m", Description: "filter requests by method (GET, POST...)"}
 	httpUrlS    = prompt.Suggest{Text: "-u", Description: "find a request to execute"}
-	historyS    = prompt.Suggest{Text: "-history", Description: "find a history request"}
+	historyS    = prompt.Suggest{Text: "-history", Description: "find a previous request"}
 )
 
 type PromptExecuteRequest struct {
@@ -55,7 +55,8 @@ func (p PromptExecuteRequest) GetParamKeys() []internal.ParamWithRole {
 func (p PromptExecuteRequest) GetDescription(markdown bool) string {
 	builder := strings.Builder{}
 	builder.WriteString(fmt.Sprintf("Execute a request from the collection - %s", prettyprint.FormatTextWithColor("!! BE CAREFUL TO THE ENVIRONMENT !!", "R", markdown)))
-	builder.WriteString(fmt.Sprintf("\n%s", prettyprint.FormatTextWithColor("# :h -m GET -u GET:users --pretty", "Y", markdown)))
+	builder.WriteString(fmt.Sprintf("\n%s", prettyprint.FormatTextWithColor(`# :h -u GET../users/findByName {{id}} "Joakim Ribier" {{x-organisation}} "GitHub" --pretty`, "Y", markdown)))
+	builder.WriteString(fmt.Sprintf("\n_to not send the header parameter, add %s after the {{x-organisation}}_", prettyprint.FormatTextWithColor(`--delete`, "Y", markdown)))
 	return builder.String()
 }
 
@@ -63,8 +64,8 @@ func (p PromptExecuteRequest) GetOptions(markdown bool) []internal.Option {
 	return []internal.Option{
 		{Value: httpMethodS.Text, Description: httpMethodS.Description},
 		{Value: httpUrlS.Text, Description: httpUrlS.Description},
-		{Value: historyS.Text, Description: fmt.Sprintf("%s\n%s", historyS.Description, prettyprint.FormatTextWithColor("# :h -history GET:users --pretty", "Y", markdown))},
-		{Value: "--search {pattern}", Description: "XPath query to extract data from the response"},
+		{Value: historyS.Text, Description: fmt.Sprintf("%s\n%s", historyS.Description, prettyprint.FormatTextWithColor("# :h -history GET../users/findByName#1 --pretty", "Y", markdown))},
+		{Value: "--search {pattern}", Description: fmt.Sprintf("find data in the response using %s awesome lib\nmore details on %s", prettyprint.FormatTextWithColor("tidwall/gjson", "Y", markdown), prettyprint.FormatTextWithColor("https://github.com/tidwall/gjson", "B", markdown))},
 		{Value: "--pretty", Description: "display a beautiful HTTP json response"},
 		{Value: "--full", Description: fmt.Sprintf("display the full response (not limited to %s characters)", prettyprint.FormatTextWithColor(strconv.Itoa(internal.HTTP_BODY_SIZE_LIMIT), "Y", markdown))},
 		{Value: "--save {/path/file.json}", Description: "save the full body response in a file"},

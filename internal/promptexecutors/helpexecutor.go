@@ -86,21 +86,6 @@ func (h HelpExecutor) help(markdown bool) string {
 	}
 	sb.WriteString("\n\n")
 
-	moreDetailsW := table.NewWriter()
-	moreDetailsW.Style().Options = table.OptionsNoBordersAndSeparators
-
-	moreDetailsSB := strings.Builder{}
-	moreDetailsSB.WriteString(fmt.Sprintf("is a 'XPath query' (%s) format to filter the response,\n", prettyprint.FormatTextWithColor("//*/status[text()='ERROR']", "Y", markdown)))
-	moreDetailsSB.WriteString(fmt.Sprintf("go to %s to see all possibilities.", prettyprint.FormatTextWithColor("https://github.com/antchfx/jsonquery", "B", markdown)))
-	moreDetailsW.AppendRows([]table.Row{
-		{
-			prettyprint.FormatTextWithColor("--search {pattern}", "Y", markdown),
-			moreDetailsSB.String(),
-		},
-	})
-
-	sb.WriteString(moreDetailsW.Render())
-
 	return sb.String()
 }
 

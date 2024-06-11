@@ -50,7 +50,7 @@ type ParamWithRole struct {
 
 // HasRightToExecute checks if the prompt action {p} can be executed based on user input and current mode.
 func HasRightToExecute(p PromptAction, in []string, role string) bool {
-	if slices.Contains(p.GetActionKeys(), in[0]) {
+	if len(in) > 0 && slices.Contains(p.GetActionKeys(), in[0]) {
 		if len(in) == 1 || p.GetParamKeys() == nil {
 			return true
 		}

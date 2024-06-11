@@ -121,7 +121,9 @@ func (i Item) GetLabel() string {
 func (h Headers) Get(env *Env, params []Param) map[string]string {
 	var out = make(map[string]string, len(h))
 	for _, header := range h {
-		out[header.Key] = replaceRawWithParams(header.Value, env, params)
+		if v := replaceRawWithParams(header.Value, env, params); v != "--delete" {
+			out[header.Key] = v
+		}
 	}
 	return out
 }

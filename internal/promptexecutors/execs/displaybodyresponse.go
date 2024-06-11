@@ -1,18 +1,18 @@
 package execs
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
 	"strconv"
 
-	"github.com/antchfx/jsonquery"
 	"github.com/joakim-ribier/gcli-4postman/internal"
 	"github.com/joakim-ribier/gcli-4postman/internal/pkg/prettyprint"
 	"github.com/joakim-ribier/gcli-4postman/internal/postman"
 	"github.com/joakim-ribier/gcli-4postman/pkg/logger"
 	"github.com/joakim-ribier/go-utils/pkg/genericsutil"
 	"github.com/joakim-ribier/go-utils/pkg/slicesutil"
+	"github.com/joakim-ribier/go-utils/pkg/stringsutil"
+	"github.com/tidwall/gjson"
 )
 
 type DisplayBodyResponseExec struct {
@@ -55,24 +55,10 @@ func (d DisplayBodyResponseExec) displayBodyResponse(in []string, itemResponse p
 	))
 	if len(itemResponse.Body) > 0 {
 		if v := slicesutil.FindNextEl(in, "--search"); v != "" {
-			doc, err := jsonquery.Parse(bytes.NewReader(itemResponse.Data))
-			if err != nil {
-				d.logger.Error(err, "`body` cannot be parsed")
-			}
-			nodes, err := jsonquery.QueryAll(doc, v)
-			if err != nil {
-				d.logger.Error(err, "`expr` cannot be parsed")
-				d.output(prettyprint.SPrintInColor(err.Error(), "error", false))
-			} else {
-				for i, node := range nodes {
-					navigator := jsonquery.CreateXPathNavigator(node)
-					d.output(prettyprint.SPrintInColor(fmt.Sprintf("[PATH] %s", buildPathUntilRootParent(node, "")), "", false))
-					d.output(prettyprint.SPrintJson([]byte(navigator.Value()), slicesutil.Exist(in, "--pretty")))
-					if i+1 < len(nodes) {
-						d.output("")
-					}
-				}
-			}
+			result := gjson.GetBytes(itemResponse.Data, v)
+			d.output(prettyprint.SPrintJson(
+				[]byte(stringsutil.OrElse(result.String(), `"no result"`)),
+				slicesutil.Exist(in, "--pretty")))
 		} else {
 			maxLimit := genericsutil.OrElse(-1, func() bool { return slicesutil.Exist(in, "--full") }, internal.HTTP_BODY_SIZE_LIMIT)
 			d.output(prettyprint.SPrintJson(itemResponse.GetBody(maxLimit), slicesutil.Exist(in, "--pretty")))
@@ -83,16 +69,5 @@ func (d DisplayBodyResponseExec) displayBodyResponse(in []string, itemResponse p
 					prettyprint.FormatTextWithColor("--save {path}", "Y", false)))
 			}
 		}
-	}
-}
-
-func buildPathUntilRootParent(parent *jsonquery.Node, path string) string {
-	if parent == nil {
-		return path
-	}
-	if path == "" {
-		return buildPathUntilRootParent(parent.Parent, parent.Data)
-	} else {
-		return buildPathUntilRootParent(parent.Parent, parent.Data+"/"+path)
 	}
 }

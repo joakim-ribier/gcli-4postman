@@ -48,11 +48,11 @@ To optimize the list of suggestions from the prompt completer, it is possible to
 | --- | --- | --- | --- |
 | load | :l |  | Load a collection - `Postman API HTTP requests format` - from the local disk.<br/>`# :l my-collection` |
 | env | :e |  | Select the collection execution environment.<br/>`# :e localhost` |
-| http | :h |  | Execute a request from the collection - `!! BE CAREFUL TO THE ENVIRONMENT !!`<br/>`# :h -m GET -u GET:users --pretty` |
- |  |  |  `-m`  |  - filter requests by method (GET, POST, ...)  | 
+| http | :h |  | Execute a request from the collection - `!! BE CAREFUL TO THE ENVIRONMENT !!`<br/>`# :h -u GET../users/findByName {{id}} "Joakim Ribier" {{x-organisation}} "GitHub" --pretty`<br/>_to not send the header parameter, add `--delete` after the {{x-organisation}}_ |
+ |  |  |  `-m`  |  - filter requests by method (GET, POST...)  | 
  |  |  |  `-u`  |  - find a request to execute  | 
- |  |  |  `-history`  |  - find a history request<br/>`# :h -history GET:users --pretty`  | 
- |  |  |  `--search {pattern}`  |  - XPath query to extract data from the response  | 
+ |  |  |  `-history`  |  - find a previous request<br/>`# :h -history GET../users/findByName#1 --pretty`  | 
+ |  |  |  `--search {pattern}`  |  - find data in the response using `tidwall/gjson` awesome lib<br/>more details on `https://github.com/tidwall/gjson`  | 
  |  |  |  `--pretty`  |  - display a beautiful HTTP json response  | 
  |  |  |  `--full`  |  - display the full response (not limited to `5000` characters)  | 
  |  |  |  `--save {/path/file.json}`  |  - save the full body response in a file  | 
@@ -70,8 +70,7 @@ To optimize the list of suggestions from the prompt completer, it is possible to
 | exit | :q |  | Exit the application.<br/>`# :q` |
 
 
- `--search {pattern}`  is a 'XPath query' (`//*/status[text()='ERROR']`) format to filter the response, 
-                       go to `https://github.com/antchfx/jsonquery` to see all possibilities.           
+
 #how-to-use#
 
 The `how-to-use` part is directly generated from the application in `ADMIN` mode.
@@ -118,7 +117,8 @@ go install -v github.com/joakim-ribier/gcli-4postman/cmd/gcli-4postman@latest
 
 * [Library for building powerful interactive prompts](https://github.com/c-bata/go-prompt)
 * [Utilities to prettify console output of tables, lists...](https://github.com/jedib0t/go-pretty)
-* [Go package that provides fast methods for formatting JSON ](https://github.com/tidwall/pretty)
+* [Go package that provides fast methods for formatting JSON](https://github.com/tidwall/pretty)
+* [Go package that provides a fast and simple way to get values from a json document](https://github.com/tidwall/gjson)
 * [Library that provides utilities functions to manipulate slices type, json serialization and http calls](https://github.com/joakim-ribier/go-utils)
 
 ## License
