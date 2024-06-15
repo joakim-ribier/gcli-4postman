@@ -1,6 +1,8 @@
 package promptexecutors
 
 import (
+	"os"
+
 	"github.com/joakim-ribier/gcli-4postman/internal"
 	"github.com/joakim-ribier/gcli-4postman/internal/pkg/httputil"
 	"github.com/joakim-ribier/gcli-4postman/internal/postman"
@@ -42,7 +44,6 @@ func (er ExecuteRequestExecutor) Call(in []string, item postman.Item) (*postman.
 	var itemResponse = postman.NewCollectionHistoryItem(
 		len(er.c.CollectionHistoryRequests)+1, item,
 		response.Status, response.TimeInMillis,
-		response.TruncateBody(internal.HTTP_BODY_SIZE_LIMIT),
 		response.Body, response.ContentLength,
 		er.c.Env, params)
 
@@ -51,13 +52,23 @@ func (er ExecuteRequestExecutor) Call(in []string, item postman.Item) (*postman.
 
 // ResetHistory resets the history of the current selected collection.
 func (er ExecuteRequestExecutor) ResetHistory() {
-	er.HistoriseCollection(postman.CollectionHistoryItems{})
+	if err := os.RemoveAll(er.c.GetCollectionHistoryPathFolder()); err != nil {
+		er.c.Print("ERROR", "unable to remove collection history %s", er.c.GetCollectionHistoryPathFolder())
+	}
 }
 
 // HistoriseCollection writes on the disk the collection items response.
-func (er ExecuteRequestExecutor) HistoriseCollection(collection postman.CollectionHistoryItems) bool {
-	if err := ioutil.Write[postman.CollectionHistoryItems](collection, er.c.GetCollectionHistoryPath(), internal.SECRET); err != nil {
-		er.logger.Error(err, "collection history cannot be written", "resource", er.c.GetCollectionHistoryPath())
+func (er ExecuteRequestExecutor) HistoriseNewCollectionItem(item postman.CollectionHistoryItem) bool {
+	if _, err := os.Open(er.c.GetCollectionHistoryPathFolder()); err != nil {
+		// assume that folder does not exist and try to create it
+		if err = os.Mkdir(er.c.GetCollectionHistoryPathFolder(), os.ModePerm); err != nil {
+			er.logger.Error(err, "collection history folder cannot be created", "resource", er.c.GetCollectionHistoryPathFolder())
+			return false
+		}
+	}
+	historyItemPath := er.c.GetCollectionHistoryPathFolder() + "/" + item.ToLight().BuildNameFile()
+	if err := ioutil.Write[postman.CollectionHistoryItem](item, historyItemPath, internal.SECRET); err != nil {
+		er.logger.Error(err, "collection history cannot be written", "resource", historyItemPath)
 		return false
 	}
 	return true

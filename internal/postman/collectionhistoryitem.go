@@ -7,7 +7,14 @@ import (
 	"github.com/joakim-ribier/go-utils/pkg/slicesutil"
 )
 
-type CollectionHistoryItems []CollectionHistoryItem
+type CollectionHistoryItemsLight []CollectionHistoryItemLight
+
+type CollectionHistoryItemLight struct {
+	Number     int
+	Item       Item
+	Env        *Env
+	ExecutedAt time.Time
+}
 
 type CollectionHistoryItem struct {
 	Number int
@@ -16,10 +23,7 @@ type CollectionHistoryItem struct {
 	Status       string
 	TimeInMillis int64
 
-	Body  string
-	Trunc bool
-
-	Data          []byte `json:"-"` // whole body but not serialized
+	Data          []byte
 	ContentLength int64
 
 	Env    *Env
@@ -28,16 +32,13 @@ type CollectionHistoryItem struct {
 	ExecutedAt time.Time
 }
 
-func NewCollectionHistoryItem(number int, item Item, status string, timeInMillis int64, body string, data []byte, contentLength int64, env *Env, params []Param) CollectionHistoryItem {
+func NewCollectionHistoryItem(number int, item Item, status string, timeInMillis int64, data []byte, contentLength int64, env *Env, params []Param) CollectionHistoryItem {
 	return CollectionHistoryItem{
 		Number: number,
 		Item:   item,
 
 		Status:       status,
 		TimeInMillis: timeInMillis,
-
-		Body:  body,
-		Trunc: len(data) != len(body),
 
 		Data:          data,
 		ContentLength: contentLength,
@@ -49,45 +50,62 @@ func NewCollectionHistoryItem(number int, item Item, status string, timeInMillis
 	}
 }
 
-// GetBody returns the {i.Data} bytes if exists else {i.Body} string.
-func (i CollectionHistoryItem) GetBody(max int) []byte {
-	if i.Data != nil {
-		if len(i.Data) > max && max != -1 {
-			return i.Data[:max]
-		}
-		return i.Data
-	} else {
-		if len(i.Body) > max && max != -1 {
-			return []byte(i.Body[:max])
-		}
-		return []byte(i.Body)
+// GetBody returns the full {Data} or truncated by the {max} limit.
+func (c CollectionHistoryItem) GetData(max int) []byte {
+	if len(c.Data) > max && max != -1 {
+		return c.Data[:max]
 	}
+	return c.Data
+}
+
+// GetSize returns the size of {Data}.
+func (c CollectionHistoryItem) GetSize() int {
+	if c.Data == nil {
+		return 0
+	}
+	return len(c.Data)
+}
+
+// ToLight transforms a collection history item to a light one
+func (c CollectionHistoryItem) ToLight() CollectionHistoryItemLight {
+	return CollectionHistoryItemLight{
+		Number:     c.Number,
+		Item:       c.Item,
+		Env:        c.Env,
+		ExecutedAt: c.ExecutedAt,
+	}
+
 }
 
 // GetSuggestDescription builds the item description for the prompt suggestions.
-func (i CollectionHistoryItem) GetSuggestDescription() string {
+func (c CollectionHistoryItemLight) GetSuggestDescription() string {
 	envName := "No environment"
-	if i.Env != nil {
-		envName = i.Env.GetName()
+	if c.Env != nil {
+		envName = c.Env.GetName()
 	}
-	return fmt.Sprintf("%s (@%s)", i.ExecutedAt.Format("2006-01-02 15:04:05"), envName)
+	return fmt.Sprintf("%s (@%s)", c.ExecutedAt.Format("2006-01-02 15:04:05"), envName)
 }
 
 // GetSuggestText builds the item text for the prompt suggestions.
-func (i CollectionHistoryItem) GetSuggestText() string {
-	return fmt.Sprintf("%s#%d", i.Item.GetLabel(), i.Number)
-}
-
-// SortByExecutedAt sorts collection history items by {executedAt} field.
-func (r CollectionHistoryItems) SortByExecutedAt() CollectionHistoryItems {
-	return slicesutil.SortT[CollectionHistoryItem](r, func(i, j CollectionHistoryItem) bool {
-		return i.ExecutedAt.After(j.ExecutedAt)
-	})
+func (c CollectionHistoryItemLight) GetSuggestText() string {
+	return fmt.Sprintf("%s#%d", c.Item.GetLabel(), c.Number)
 }
 
 // FindByLabel finds collection history item that matches with {label}.
-func (r CollectionHistoryItems) FindByLabel(label string) *CollectionHistoryItem {
-	return slicesutil.FindT[CollectionHistoryItem](r, func(i CollectionHistoryItem) bool {
+func (c CollectionHistoryItemsLight) FindByLabel(label string) *CollectionHistoryItemLight {
+	return slicesutil.FindT[CollectionHistoryItemLight](c, func(i CollectionHistoryItemLight) bool {
 		return i.GetSuggestText() == label
+	})
+}
+
+// GetNameFile builds the history item filename.
+func (c CollectionHistoryItemLight) BuildNameFile() string {
+	return c.ExecutedAt.Format("2006-01-02_150405") + "_.json"
+}
+
+// SortByExecutedAt sorts collection history items by {executedAt} field.
+func (c CollectionHistoryItemsLight) SortByExecutedAt() CollectionHistoryItemsLight {
+	return slicesutil.SortT[CollectionHistoryItemLight](c, func(i, j CollectionHistoryItemLight) bool {
+		return i.ExecutedAt.After(j.ExecutedAt)
 	})
 }

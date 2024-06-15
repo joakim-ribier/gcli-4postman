@@ -98,6 +98,7 @@ func (p PromptLoadCollection) PromptExecutor(in []string) *internal.PromptCallba
 		if len(in) > 1 {
 			if tab := strings.Split(strings.ReplaceAll(in[1], "", ""), "/_"); len(tab) == 2 {
 				if collections, is := p.getFolders()[tab[0]]; is && slicesutil.Exist(collections, tab[1]) {
+					p.c.Clean()
 					p.c.WorkspaceName = tab[0]
 					p.c.CollectionName = tab[1]
 					p.load()
@@ -112,51 +113,60 @@ func (p PromptLoadCollection) PromptExecutor(in []string) *internal.PromptCallba
 
 func (p PromptLoadCollection) load() {
 	if p.c.WorkspaceName == "" || p.c.CollectionName == "" {
-		p.c.Print("WARN", "unable to load collection \"%s\"...", p.c.CollectionName)
+		p.c.Print("WARN", "unable to load collection %s...", p.c.CollectionName)
 		return
 	}
 
 	c, err := ioutil.Load[postman.Collection](p.c.GetCollectionPath(), internal.SECRET)
 	if err != nil {
 		p.logger.Error(err, "file cannot be loaded", "resource", p.c.GetCollectionPath())
-		p.c.Print("ERROR", "unable to load collection \"%s\"...", p.c.GetCollectionPath())
+		p.c.Print("ERROR", "unable to load collection '%s/%s'", p.c.WorkspaceName, p.c.CollectionName)
 		return
 	} else {
-		p.c.Print("INFO", "loads collection \"%s\" from workspace \"%s\"", p.c.CollectionName, p.c.WorkspaceName)
+		p.c.Print("INFO", "loads collection '%s' from workspace '%s'", p.c.CollectionName, p.c.WorkspaceName)
 		p.c.Collection = &c
 	}
 
 	files, err := os.ReadDir(p.c.GetWorkspacePath())
 	if err != nil {
 		p.logger.Error(err, "folder cannot be read", "resource", p.c.GetWorkspacePath())
-		p.c.Print("ERROR", "unable to load environment files in the workspace directory %s", p.c.GetWorkspacePath())
+		p.c.Print("ERROR", "unable to load environment files in the workspace '%s'", p.c.WorkspaceName)
 		p.c.Envs = []postman.Env{}
 	} else {
-		var envs []postman.Env
 		for _, file := range files {
 			if !file.IsDir() && strings.Contains(strings.ToLower(file.Name()), ".env.json") {
 				env, err := ioutil.Load[postman.Env](p.c.GetWorkspacePath()+"/"+file.Name(), internal.SECRET)
 				if err != nil {
 					p.logger.Error(err, "file cannot be loaded", "resource", p.c.GetWorkspacePath()+"/"+file.Name())
-					p.c.Print("ERROR", "unable to load environment \"%s\"...", file.Name())
+					p.c.Print("ERROR", "unable to load environment '%s'", file.Name())
 				} else {
-					p.c.Print("INFO", "loads environment \"%s\" from workspace \"%s\"", env.GetName(), p.c.WorkspaceName)
-					envs = append(envs, env)
+					p.c.Print("INFO", "loads environment '%s' from workspace '%s'", env.GetName(), p.c.WorkspaceName)
+					p.c.Envs = append(p.c.Envs, env)
 				}
 			}
 		}
-		p.c.Envs = envs
 	}
 
-	collectionHistory, err := ioutil.Load[postman.CollectionHistoryItems](p.c.GetCollectionHistoryPath(), internal.SECRET)
+	files, err = os.ReadDir(p.c.GetCollectionHistoryPathFolder())
 	if err != nil {
-		p.logger.Error(err, "file cannot be loaded", "resource", p.c.GetCollectionHistoryPath())
-		p.c.CollectionHistoryRequests = postman.CollectionHistoryItems{}
+		p.logger.Error(err, "folder cannot be read", "resource", p.c.GetCollectionHistoryPathFolder())
+		p.c.Print("WARN", "unable to load history items files for the collection '%s/%s'", p.c.WorkspaceName, p.c.CollectionName)
+		p.c.CollectionHistoryRequests = postman.CollectionHistoryItemsLight{}
 	} else {
-		if len(collectionHistory) > 0 {
-			p.c.Print("INFO", "loads collection \"%s\" history request (%d)", p.c.CollectionName, len(collectionHistory))
+		for _, file := range files {
+			if !file.IsDir() {
+				historyItem, err := ioutil.Load[postman.CollectionHistoryItemLight](p.c.GetCollectionHistoryPathFolder()+"/"+file.Name(), internal.SECRET)
+				if err != nil {
+					p.logger.Error(err, "file cannot be loaded", "resource", p.c.GetCollectionHistoryPathFolder()+"/"+file.Name())
+					p.c.Print("ERROR", "unable to load history request '%s'", file.Name())
+				} else {
+					p.c.CollectionHistoryRequests = append(p.c.CollectionHistoryRequests, historyItem)
+				}
+			}
 		}
-		p.c.CollectionHistoryRequests = collectionHistory
+		if len(p.c.CollectionHistoryRequests) > 0 {
+			p.c.Print("INFO", "loads collection %s history requests (%d)", p.c.CollectionName, len(p.c.CollectionHistoryRequests))
+		}
 	}
 }
 

@@ -13,6 +13,7 @@ import (
 	"github.com/joakim-ribier/gcli-4postman/internal/postman"
 	"github.com/joakim-ribier/gcli-4postman/internal/promptexecutors"
 	"github.com/joakim-ribier/gcli-4postman/internal/promptexecutors/execs"
+	"github.com/joakim-ribier/gcli-4postman/pkg/ioutil"
 	"github.com/joakim-ribier/gcli-4postman/pkg/logger"
 	"github.com/joakim-ribier/go-utils/pkg/iosutil"
 	"github.com/joakim-ribier/go-utils/pkg/slicesutil"
@@ -79,7 +80,7 @@ func (p PromptExecuteRequest) PromptSuggest(in []string, d prompt.Document) ([]p
 	}
 
 	if slices.Contains(in, historyS.Text) {
-		return slicesutil.TransformT[postman.CollectionHistoryItem, prompt.Suggest](p.c.CollectionHistoryRequests.SortByExecutedAt(), func(f postman.CollectionHistoryItem) (*prompt.Suggest, error) {
+		return slicesutil.TransformT[postman.CollectionHistoryItemLight, prompt.Suggest](p.c.CollectionHistoryRequests.SortByExecutedAt(), func(f postman.CollectionHistoryItemLight) (*prompt.Suggest, error) {
 			return &prompt.Suggest{Text: f.GetSuggestText(), Description: f.GetSuggestDescription()}, nil
 		}), nil
 	}
@@ -151,13 +152,17 @@ func (p PromptExecuteRequest) PromptExecutor(in []string) *internal.PromptCallba
 		if slices.Contains(in, historyS.Text) && len(in) > 1 {
 			if slices.Contains(in, "--reset") {
 				p.GetPromptExecutor().(promptexecutors.ExecuteRequestExecutor).ResetHistory()
-				p.c.CollectionHistoryRequests = postman.CollectionHistoryItems{}
+				p.c.CollectionHistoryRequests = postman.CollectionHistoryItemsLight{}
 			} else {
 				if len(in) > 2 {
-					if itemResponse := p.c.CollectionHistoryRequests.FindByLabel(in[2]); itemResponse != nil {
-						execs.NewDisplayBodyResponseExec(p.logger, prettyprint.Print).Display(
-							slicesutil.FilterT(in, func(s string) bool { return s != "--full" }), itemResponse)
-						prettyprint.Print("\n...the response from the history body may have been truncated...")
+					if historyItemLight := p.c.CollectionHistoryRequests.FindByLabel(in[2]); historyItemLight != nil {
+						historyItemPath := p.c.GetCollectionHistoryPathFolder() + "/" + historyItemLight.BuildNameFile()
+						historyItem, err := ioutil.Load[postman.CollectionHistoryItem](historyItemPath, internal.SECRET)
+						if err != nil {
+							p.c.Log.Error(err, "data cannot be loaded", "ressource", historyItemPath)
+						} else {
+							execs.NewDisplayBodyResponseExec(p.logger, prettyprint.Print).Display(in, &historyItem)
+						}
 					}
 				}
 			}
@@ -167,13 +172,14 @@ func (p PromptExecuteRequest) PromptExecutor(in []string) *internal.PromptCallba
 				if response, err := p.GetPromptExecutor().(promptexecutors.ExecuteRequestExecutor).Call(in, *item); err != nil {
 					p.c.Print("ERROR", stringsutil.NewStringS(err.Error()).ReplaceAll("%7B", "{").ReplaceAll("%7D", "}").S())
 				} else {
-					// historise item
-					internal.AddCMDHistory(*p.c, strings.Join(in, " "))
-					p.c.AddCollectionHistoryRequest(*response)
-					p.GetPromptExecutor().(promptexecutors.ExecuteRequestExecutor).HistoriseCollection(p.c.CollectionHistoryRequests)
-					// display response
+					// refresh the context
+					p.c.CollectionHistoryRequests = append(p.c.CollectionHistoryRequests, response.ToLight())
+
+					internal.HistoriseCommand(*p.c, strings.Join(in, " "))
+					p.GetPromptExecutor().(promptexecutors.ExecuteRequestExecutor).HistoriseNewCollectionItem(*response)
+
 					execs.NewDisplayBodyResponseExec(p.logger, prettyprint.Print).Display(in, response)
-					// export body
+
 					if path := slicesutil.FindNextEl(in, "--save"); path != "" {
 						if err := iosutil.Write(response.Data, path); err != nil {
 							p.c.Log.Error(err, "data cannot be writed")
