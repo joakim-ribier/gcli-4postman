@@ -74,8 +74,8 @@ func FindPromptActionExecutor[T PromptExecutor](actions []PromptAction) *T {
 	return nil
 }
 
-// AddCMDHistory historises the command {cmd} (writes data on the disk).
-func AddCMDHistory(c Context, cmd string) {
+// HistoriseCommand historises the command {cmd} (writes data on the disk).
+func HistoriseCommand(c Context, cmd string) {
 	if cmd != "" {
 		histories := slicesutil.AddOrReplaceT[CMDHistory](c.CMDsHistory, NewCMDHistory(cmd), func(c CMDHistory) bool {
 			return c.CMD == cmd

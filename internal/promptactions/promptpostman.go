@@ -99,7 +99,7 @@ func (p PromptPostman) PromptExecutor(in []string) *internal.PromptCallback {
 		}
 
 		if slicesutil.Exist(in, workspaceParam) {
-			internal.AddCMDHistory(*p.c, strings.Join(in, " "))
+			internal.HistoriseCommand(*p.c, strings.Join(in, " "))
 
 			if bytes := p.call(workspacesEndpoint, apiKey); bytes != nil {
 				prettyprint.Print(prettyprint.SPrintJson(bytes, slicesutil.Exist(in, "--pretty")))
@@ -108,7 +108,7 @@ func (p PromptPostman) PromptExecutor(in []string) *internal.PromptCallback {
 		}
 
 		if slicesutil.Exist(in, syncParam) {
-			internal.AddCMDHistory(*p.c, strings.Join(in, " "))
+			internal.HistoriseCommand(*p.c, strings.Join(in, " "))
 
 			p.c.Print("INFO", "sync workspace with its collections and environments")
 			p.c.Print("INFO", "find workspace \"%s\" ...", slicesutil.FindNextEl(in, syncParam))

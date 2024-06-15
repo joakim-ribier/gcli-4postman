@@ -22,7 +22,7 @@ type Context struct {
 	Env        *postman.Env
 	Envs       []postman.Env
 
-	CollectionHistoryRequests postman.CollectionHistoryItems
+	CollectionHistoryRequests postman.CollectionHistoryItemsLight
 	CMDsHistory               CMDHistories
 
 	Log   logger.Logger
@@ -59,12 +59,8 @@ func (c *Context) Clean() {
 	c.Env = nil
 }
 
-func (c *Context) AddCollectionHistoryRequest(i postman.CollectionHistoryItem) {
-	c.CollectionHistoryRequests = append(c.CollectionHistoryRequests, i)
-}
-
-func (c *Context) GetCollectionHistoryPath() string {
-	return GetHomeWorkspaceFilePath(c.WorkspaceName, c.CollectionName+".history.json")
+func (c *Context) GetCollectionHistoryPathFolder() string {
+	return GetHomeWorkspaceFilePath(c.WorkspaceName, c.CollectionName+"-history")
 }
 
 func (c *Context) GetCollectionPath() string {

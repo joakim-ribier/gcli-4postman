@@ -132,9 +132,9 @@ func (s SecureModeExec) overwriteWorkspace(workspace, secret string) error {
 					return err
 				}
 			}
-			if strings.Contains(file.Name(), ".history.json") {
-				if err := overwriteT[postman.CollectionHistoryItems](filePath, s.tmpSuffix, secret, s.logger); err != nil {
-					s.c.Print("ERROR", "unable to overwrite collection history %s", filePath)
+			if file.IsDir() && strings.Contains(file.Name(), "-history") {
+				if err := os.RemoveAll(filePath); err != nil {
+					s.c.Print("ERROR", "unable to remove collection history %s", filePath)
 					return err
 				}
 			}
