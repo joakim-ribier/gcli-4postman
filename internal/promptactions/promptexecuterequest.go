@@ -175,9 +175,17 @@ func (p PromptExecuteRequest) PromptExecutor(in []string) *internal.PromptCallba
 					// refresh the context
 					p.c.CollectionHistoryRequests = append(p.c.CollectionHistoryRequests, response.ToLight())
 
-					internal.HistoriseCommand(*p.c, strings.Join(in, " "))
-					p.GetPromptExecutor().(promptexecutors.ExecuteRequestExecutor).HistoriseNewCollectionItem(*response)
+					// transform correctly the tab to the initial cmd
+					cmd := slicesutil.TransformT(in, func(v string) (*string, error) {
+						var a string = v
+						if strings.Contains(a, internal.SEP_CHARACTER) {
+							a = internal.ENCLOSE_CHARACTER + a + internal.ENCLOSE_CHARACTER
+						}
+						return &a, nil
+					})
+					internal.HistoriseCommand(*p.c, strings.Join(cmd, " "))
 
+					p.GetPromptExecutor().(promptexecutors.ExecuteRequestExecutor).HistoriseNewCollectionItem(*response)
 					execs.NewDisplayBodyResponseExec(p.logger, prettyprint.Print).Display(in, response)
 
 					if path := slicesutil.FindNextEl(in, "--save"); path != "" {

@@ -22,10 +22,17 @@ func NewCMDHistory(cmd string) CMDHistory {
 
 // GetName returns the CMD history
 func (s CMDHistories) GetName() []string {
-	out := slicesutil.SortT[CMDHistory](s, func(c1, c2 CMDHistory) bool {
-		return c1.ExecutedAt.Before(c2.ExecutedAt)
+	out := slicesutil.SortT[CMDHistory](s, func(c1, c2 CMDHistory) int {
+		return c1.ExecutedAt.Compare(c2.ExecutedAt)
 	})
 	return slicesutil.TransformT[CMDHistory, string](out, func(c CMDHistory) (*string, error) {
 		return &c.CMD, nil
+	})
+}
+
+// SortByExecutedAt sorts the CMD by {ExecutedAt}
+func (s CMDHistories) SortByExecutedAt() []CMDHistory {
+	return slicesutil.SortT[CMDHistory](s, func(c1, c2 CMDHistory) int {
+		return c1.ExecutedAt.Compare(c2.ExecutedAt)
 	})
 }
