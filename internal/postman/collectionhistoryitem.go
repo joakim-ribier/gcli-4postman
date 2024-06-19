@@ -105,7 +105,7 @@ func (c CollectionHistoryItemLight) BuildNameFile() string {
 
 // SortByExecutedAt sorts collection history items by {executedAt} field.
 func (c CollectionHistoryItemsLight) SortByExecutedAt() CollectionHistoryItemsLight {
-	return slicesutil.SortT[CollectionHistoryItemLight](c, func(i, j CollectionHistoryItemLight) int {
-		return i.ExecutedAt.Compare(j.ExecutedAt) * -1 // inverse order of `Compare` function
+	return slicesutil.SortTByTime[CollectionHistoryItemLight](c, func(i, j CollectionHistoryItemLight) (time.Time, time.Time) {
+		return j.ExecutedAt, i.ExecutedAt
 	})
 }

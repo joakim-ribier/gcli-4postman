@@ -64,14 +64,8 @@ func (p PromptLoadCollection) PromptSuggest(in []string, d prompt.Document) ([]p
 			suggests = append(suggests, prompt.Suggest{Text: fmt.Sprintf("%s/_%s", workspace, collection), Description: ""})
 		}
 	}
-	return slicesutil.SortT(suggests, func(s1, s2 prompt.Suggest) int {
-		switch {
-		case strings.ToLower(s1.Text) < strings.ToLower(s2.Text):
-			return -1
-		case strings.ToLower(s1.Text) > strings.ToLower(s2.Text):
-			return +1
-		}
-		return 0
+	return slicesutil.SortT(suggests, func(s1, s2 prompt.Suggest) (string, string) {
+		return s1.Text, s2.Text
 	}), nil
 }
 
