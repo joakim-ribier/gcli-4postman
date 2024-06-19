@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"math"
 	"slices"
 
 	"github.com/c-bata/go-prompt"
@@ -77,9 +78,11 @@ func FindPromptActionExecutor[T PromptExecutor](actions []PromptAction) *T {
 // HistoriseCommand historises the command {cmd} (writes data on the disk).
 func HistoriseCommand(c Context, cmd string) {
 	if cmd != "" {
-		histories := slicesutil.AddOrReplaceT[CMDHistory](c.CMDsHistory, NewCMDHistory(cmd), func(c CMDHistory) bool {
+		var histories CMDHistories = slicesutil.AddOrReplaceT[CMDHistory](c.CMDsHistory, NewCMDHistory(cmd), func(c CMDHistory) bool {
 			return c.CMD == cmd
 		})
-		ioutil.Write[CMDHistories](histories, c.GetCMDHistoryPath(), SECRET)
+		ioutil.Write[CMDHistories](
+			histories.SortByExecutedAt()[:int(math.Min(float64(MAX_CMD_HISTORISE), float64(len(histories))))],
+			c.GetCMDHistoryPath(), SECRET)
 	}
 }

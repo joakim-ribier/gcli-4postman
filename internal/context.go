@@ -13,6 +13,9 @@ var APP_MODE = "user"
 var HTTP_BODY_SIZE_LIMIT = 5000
 var SECRET = ""
 var FILE_LOG = ""
+var SEP_CHARACTER = " "
+var ENCLOSE_CHARACTER = "'"
+var MAX_CMD_HISTORISE = 50
 
 type Context struct {
 	WorkspaceName  string

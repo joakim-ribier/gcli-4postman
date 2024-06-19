@@ -219,8 +219,7 @@ func promptSuggest(d prompt.Document) []prompt.Suggest {
 
 func promptExecutor(in string) {
 	in = strings.TrimSpace(in)
-	tab := strings.Split(in, " ")
-
+	tab := stringsutil.Split(in, internal.SEP_CHARACTER, internal.ENCLOSE_CHARACTER)
 	if promptCallback != nil && promptCallback.IsAvailableAnswer(in) {
 		promptCallback.Callback(tab, actions)
 		promptCallback = nil
