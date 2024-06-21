@@ -35,29 +35,6 @@ func (h HelpExecutor) Display() {
 func (h HelpExecutor) help(markdown bool) string {
 	sb := strings.Builder{}
 	sb.Reset()
-
-	// CMD part
-	sb.WriteString("## CMD\n\n")
-	sb.WriteString(fmt.Sprintf("The %s is handled by a %s which tries to get the correct suggestions.",
-		prettyprint.FormatTextWithColor("CLI", "Y", markdown),
-		prettyprint.FormatTextWithColor("prompt completer", "Y", markdown)))
-	sb.WriteString(fmt.Sprintf("\nTo optimize the list of suggestions from the prompt completer, it is possible to combine %s and %s operators.",
-		prettyprint.FormatTextWithColor("&&", "Y", markdown),
-		prettyprint.FormatTextWithColor("||", "Y", markdown)))
-	sb.WriteString(fmt.Sprintf("\n* %s only matches with the left side of the suggestion %s.",
-		prettyprint.FormatTextWithColor("{a single value}", "Y", markdown),
-		prettyprint.FormatTextWithColor("{Suggest.Text}", "Y", markdown)))
-	sb.WriteString(fmt.Sprintf("\n* %s matches the left value with the %s %s the right side with the %s.",
-		prettyprint.FormatTextWithColor("{value}&&{value}", "Y", markdown),
-		prettyprint.FormatTextWithColor("{Suggest.Text}", "Y", markdown),
-		prettyprint.FormatTextWithColor("AND", "Y", markdown),
-		prettyprint.FormatTextWithColor("{Suggest.Description}", "Y", markdown)))
-	sb.WriteString(fmt.Sprintf("\n* %s matches the left value with the %s %s the right side with the %s.",
-		prettyprint.FormatTextWithColor("{value}||{value}", "Y", markdown),
-		prettyprint.FormatTextWithColor("{Suggest.Text}", "Y", markdown),
-		prettyprint.FormatTextWithColor("OR", "Y", markdown),
-		prettyprint.FormatTextWithColor("{Suggest.Description}", "Y", markdown)))
-	sb.WriteString("\n\n")
 	if markdown {
 		actionsHelp := h.getActionsHelp(markdown).RenderMarkdown()
 		read_lines := strings.Split(actionsHelp, "\n")
@@ -84,8 +61,6 @@ func (h HelpExecutor) help(markdown bool) string {
 	} else {
 		sb.WriteString(h.getActionsHelp(markdown).Render())
 	}
-	sb.WriteString("\n\n")
-
 	return sb.String()
 }
 

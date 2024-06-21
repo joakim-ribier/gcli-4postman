@@ -7,7 +7,7 @@
 
 #### `CLI-4Postman` is a GO command line interface (CLI) for Postman based on [go-prompt](https://github.com/c-bata/go-prompt) awesome library.
 
-[Usage](#usage) - [CMD](#cmd) - [Releases](#releases) - [How to Install](#how-to-install) - [Thanks](#thanks) - [License](#license)
+[Usage](#usage) - [Prompt](#prompt-completer) - [CMD](#cmd) - [Releases](#releases) - [How to Install](#how-to-install) - [Thanks](#thanks) - [License](#license)
 
 ## Usage
 
@@ -26,24 +26,77 @@ $ ./gcli-4postman --secret {your-secret} --mode admin --home /home/{user}/data/g
 
 To get started quickly, export collections from a Postman account and add them on the `$GCLI_4POSTMAN_HOME` folder:
 
-  * $GCLI_4POSTMAN_HOME
-    * Personal (workspace)
-      * github.collection.json (collection)
-      * postman.collection.json (collection)
-      * localhost.env.json (environment)
-      * prod.env.json ...
-    * {My Company} (new workspace)
-      * ...
+* $GCLI_4POSTMAN_HOME --> the root folder which contains the collections
+  * gcli-4postman_cmd.json --> command history of the entire application
+  * Personal --> postman workspace
+    * github.collection.json --> postman collection
+    * github-history --> folder which contains the response history
+    * localhost.env.json --> postman environment
+    * ...
+  * {My Company}
+    * ...
 
-#how-to-use#
+## Prompt Completer
+
+The `CLI` is handled by a `prompt completer` which tries to get the best suggestions. To optimize the list of suggestions from the prompt completer, it's possible to combine `*`, `&&` and `||` operators.
+
+Few examples of the combinaisons:
+
+```go
+$ :h -u
+...
+# text                      # description
+GET../list-users            api/v1/users
+GET../get-user              api/v1/user/{{id}}
+DELETE../remove-user        api/v1/user/{{id}}
+POST../create-new-project   api/v1/project/new
+GET../get-project           api/v1/project/{{id}}
+DELETE../remove-project     api/v1/project/{{id}}
+PUT../add-new-project       api/v1/user/{{id}}/project/add
+```
+
+* full-text search on `text`
+
+```go
+$ :h -u GET
+# text                      # description
+`GET`../list-users          api/v1/users
+`GET`../`get`-user          api/v1/user/{{id}}
+`GET`../`get`-project       api/v1/project/{{id}}
+```
+
+* full-text search on `text` with `x` values
+
+```go
+$ :h -u DELETE*project
+# text                      # description
+`DELETE`../remove-`project` api/v1/project/{{id}}
+```
+
+* full-text search on `text` AND `description`
+
+```go
+$ :h -u GET&&project
+# text                      # description
+`GET`../`get`-project       api/v1/`project`/{{id}}
+```
+
+* full-text search on `text` OR `description`
+
+```go
+$ :h -u GET||project
+# text                      # description
+`GET`../list-users          api/v1/users
+`GET`../`get`-user          api/v1/user/{{id}}
+POST../create-new-project   api/v1/`project`/new
+`GET`../`get`-project       api/v1/project/{{id}}
+DELETE../remove-project     api/v1/`project`/{{id}}
+PUT../add-new-project       api/v1/user/{{id}}/`project`/add
+```
+
 ## CMD
 
-The `CLI` is handled by a `prompt completer` which tries to get the correct suggestions.
-To optimize the list of suggestions from the prompt completer, it is possible to combine `&&` and `||` operators.
-* `{a single value}` only matches with the left side of the suggestion `{Suggest.Text}`.
-* `{value}&&{value}` matches the left value with the `{Suggest.Text}` `AND` the right side with the `{Suggest.Description}`.
-* `{value}||{value}` matches the left value with the `{Suggest.Text}` `OR` the right side with the `{Suggest.Description}`.
-
+#how-to-use#
 | Command |  | Option | Description |
 | --- | --- | --- | --- |
 | load | :l |  | Load a collection - `Postman API HTTP requests format` - from the local disk.<br/>`# :l my-collection` |
@@ -68,8 +121,6 @@ To optimize the list of suggestions from the prompt completer, it is possible to
  |  |  |  `-secure-mode enable`  |  - enable secure mode by adding (or update) a new secret `--secret {secret}` `// --mode admin`  | 
  |  |  |  `-secure-mode disable`  |  - disable secure mode `!! NOT RECOMMENDED !!` `// --mode admin`  | 
 | exit | :q |  | Exit the application.<br/>`# :q` |
-
-
 
 #how-to-use#
 

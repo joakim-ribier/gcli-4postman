@@ -130,19 +130,25 @@ func promptCompleter(d prompt.Document) []prompt.Suggest {
 		return arg0, arg1
 	}
 
+	equal := func(suggest string, args string) bool {
+		return slicesutil.ForAllT(strings.Split(args, "*"), func(arg string) bool {
+			return strings.Contains(suggest, arg)
+		})
+	}
+
 	input := strings.ToLower(d.GetWordBeforeCursor())
 	arg0, arg1 := getArgs(input)
 
-	return slicesutil.FilterT[prompt.Suggest](promptSuggest(d), func(s prompt.Suggest) bool {
+	return slicesutil.FilterT(promptSuggest(d), func(s prompt.Suggest) bool {
 		text := strings.ToLower(s.Text)
 		description := strings.ToLower(s.Description)
 		if strings.Contains(input, "&&") {
-			return strings.Contains(text, arg0) && strings.Contains(description, arg1)
+			return equal(text, arg0) && equal(description, arg1)
 		}
 		if strings.Contains(input, "||") {
-			return strings.Contains(text, arg0) || strings.Contains(description, arg1)
+			return equal(text, arg0) || equal(description, arg1)
 		}
-		return strings.Contains(text, arg0)
+		return equal(text, arg0)
 	})
 }
 

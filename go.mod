@@ -8,7 +8,7 @@ require (
 	github.com/go-logr/zapr v1.3.0
 	github.com/gosimple/slug v1.14.0
 	github.com/jedib0t/go-pretty/v6 v6.5.9
-	github.com/joakim-ribier/go-utils v0.0.0-20240619190513-aa1bd166233f
+	github.com/joakim-ribier/go-utils v0.0.0-20240619210121-0027d8143070
 	github.com/tidwall/gjson v1.17.1
 	github.com/tidwall/pretty v1.2.1
 	go.uber.org/zap v1.27.0
